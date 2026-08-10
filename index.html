@@ -89,6 +89,11 @@ try {
         this.style.display = "none";
     });
 } catch (e) {}
+
+// Register service worker for offline/cache support
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function () {});
+}
 </script>
 
 </body>
