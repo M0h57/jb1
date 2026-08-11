@@ -64,6 +64,33 @@
     #actions { width: 82vw; }
     .action { width: 100%; }
   }
+
+  /* Cache indicator */
+  #cache-bar {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: #111927; border: 1px solid #2a3650;
+    border-radius: 12px; padding: 10px 16px;
+    display: none; flex-direction: column; gap: 6px;
+    min-width: 240px; max-width: 90vw;
+    box-shadow: 0 8px 28px rgba(0,0,0,.5);
+    z-index: 999;
+  }
+  #cache-bar.visible { display: flex; }
+  #cache-label {
+    font-size: 12px; color: #7c9ab8; letter-spacing: .04em;
+    display: flex; justify-content: space-between;
+  }
+  #cache-track {
+    width: 100%; height: 5px; background: #1e2d42;
+    border-radius: 3px; overflow: hidden;
+  }
+  #cache-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #3b8cff, #47c76a);
+    border-radius: 3px;
+    transition: width .3s ease;
+  }
+  #cache-bar.done #cache-fill { background: #47c76a; }
 </style>
 </head>
 <body>
@@ -78,7 +105,17 @@
   <div id="status"></div>
 </div>
 
-<script>try {
+<!-- Cache progress indicator -->
+<div id="cache-bar">
+  <div id="cache-label">
+    <span id="cache-text">Caching for offline use…</span>
+    <span id="cache-pct">0%</span>
+  </div>
+  <div id="cache-track"><div id="cache-fill"></div></div>
+</div>
+
+<script>
+try {
     var q = new URLSearchParams(location.search);
     var start = document.getElementById("start");
     start.focus();
@@ -90,9 +127,45 @@ try {
     });
 } catch (e) {}
 
-// Register service worker for offline/cache support
+// Cache indicator
+var cacheBar  = document.getElementById("cache-bar");
+var cacheFill = document.getElementById("cache-fill");
+var cacheText = document.getElementById("cache-text");
+var cachePct  = document.getElementById("cache-pct");
+
+function setCacheProgress(pct) {
+    cacheFill.style.width = pct + "%";
+    cachePct.textContent  = Math.round(pct) + "%";
+}
+
+// Register service worker and listen for progress messages
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(function () {});
+    navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function (reg) {
+        // If a new SW is installing right now, show the bar
+        if (reg.installing) {
+            cacheBar.classList.add("visible");
+        }
+        reg.addEventListener("updatefound", function () {
+            cacheBar.classList.add("visible");
+            setCacheProgress(0);
+            cacheText.textContent = "Caching for offline use…";
+        });
+    }).catch(function () {});
+
+    navigator.serviceWorker.addEventListener("message", function (e) {
+        if (!e.data || e.data.type !== "CACHE_PROGRESS") return;
+        var pct = e.data.pct;
+        cacheBar.classList.add("visible");
+        setCacheProgress(pct);
+        if (pct >= 100) {
+            cacheBar.classList.add("done");
+            cacheText.textContent = "✓ Ready for offline use";
+            setTimeout(function () {
+                cacheBar.classList.remove("visible");
+                cacheBar.classList.remove("done");
+            }, 2800);
+        }
+    });
 }
 </script>
 
