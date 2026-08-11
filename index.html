@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" manifest="jb1.appcache">
+<html lang="en" manifest="cache.appcache">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -96,7 +96,8 @@
   <img id="cat" src="slopkit/cat.jpg" alt="">
   <div id="actions">
     <a id="start" class="action"
-       href="slopkit/poops.html?go=1&amp;auto=1&amp;trigger=netcontrol&amp;payload=1&amp;v=17"
+       href="#" 
+       onclick="window.location.href='slopkit/poops.html?go=1&auto=1&trigger=netcontrol&payload=1&v=17'; return false;"
        tabindex="0">RUN</a>
   </div>
   <div id="status"></div>
@@ -133,6 +134,24 @@ try {
     });
 } catch (e) {}
 
+// Auto-Redirect Countdown Logic
+var countdown = 5;
+var startBtn = document.getElementById("start");
+
+if (startBtn) {
+    startBtn.innerText = "RUNNING IN " + countdown;
+    var timer = setInterval(function() {
+        countdown--;
+        startBtn.innerText = "RUNNING IN " + countdown;
+        
+        if (countdown <= 0) {
+            clearInterval(timer);
+            // Force the navigation via JavaScript to bypass offline link blocks
+            window.location.href = 'slopkit/poops.html?go=1&auto=1&trigger=netcontrol&payload=1&v=17';
+        }
+    }, 1000);
+}
+
 // AppCache indicator
 try {
     var appCache = window.applicationCache;
@@ -166,7 +185,6 @@ try {
             fill.style.width = p + "%";
             pct.textContent  = p + "%";
         } else {
-            // not computable — just animate forward
             var cur = parseFloat(fill.style.width) || 20;
             fill.style.width = Math.min(cur + 3, 90) + "%";
         }
@@ -191,11 +209,10 @@ try {
     });
 
     appCache.addEventListener("error", function () {
-        alert("AppCache Error: Caching failed. A file listed in jb1.appcache is missing (404) or there is a network issue.");
+        alert("AppCache Error: Caching failed. A file listed in your manifest is missing (404) or there is a network issue.");
         hideBar(0); 
     });
 
-    // If already offline, show a quiet indicator
     if (!navigator.onLine) {
         showBar();
         text.textContent = "★ Offline mode";
