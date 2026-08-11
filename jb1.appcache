@@ -1,9 +1,10 @@
 CACHE MANIFEST
-# v2
+# v3
 
 CACHE:
 index.html
 slopkit/poops.html
+slopkit/poops.html?go=1&auto=1&trigger=netcontrol&payload=1&v=17
 slopkit/cat.jpg
 slopkit/mmhmm-cats-ps5.gif
 slopkit/core.js
@@ -67,6 +68,11 @@ ui/payload-web-failed.png
 ui/payload-web-sending.png
 ui/payload-web-sent.png
 document/en/ps5/index.html
+sw.js
 
 NETWORK:
 *
+
+FALLBACK:
+slopkit/poops.html slopkit/poops.html
+/ index.html
