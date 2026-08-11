@@ -112,6 +112,15 @@
 </div>
 
 <script>
+// Nuke conflicting Service Workers
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+            registration.unregister();
+        }
+    });
+}
+
 try {
     var q = new URLSearchParams(location.search);
     var start = document.getElementById("start");
@@ -172,7 +181,7 @@ try {
     });
 
     appCache.addEventListener("noupdate", function () {
-        hideBar(0); // already cached, nothing to show
+        hideBar(0); 
     });
 
     appCache.addEventListener("obsolete", function () {
@@ -182,7 +191,8 @@ try {
     });
 
     appCache.addEventListener("error", function () {
-        hideBar(0); // silently fail, don't confuse user
+        alert("AppCache Error: Caching failed. A file listed in jb1.appcache is missing (404) or there is a network issue.");
+        hideBar(0); 
     });
 
     // If already offline, show a quiet indicator
