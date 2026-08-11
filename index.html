@@ -113,7 +113,7 @@
 </div>
 
 <script>
-// Nuke conflicting Service Workers
+// Remove conflicting Service Workers
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for(let registration of registrations) {
@@ -146,7 +146,6 @@ if (startBtn) {
         
         if (countdown <= 0) {
             clearInterval(timer);
-            // Force the navigation via JavaScript to bypass offline link blocks
             window.location.href = 'slopkit/poops.html?go=1&auto=1&trigger=netcontrol&payload=1&v=17';
         }
     }, 1000);
@@ -209,7 +208,7 @@ try {
     });
 
     appCache.addEventListener("error", function () {
-        alert("AppCache Error: Caching failed. A file listed in your manifest is missing (404) or there is a network issue.");
+        alert("AppCache Error: A file in cache.appcache failed to load.");
         hideBar(0); 
     });
 
