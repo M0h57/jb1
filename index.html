@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" manifest="jb1.appcache">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -26,7 +26,6 @@
     border: 4px solid #343c49; border-radius: 18px;
     box-shadow: 0 24px 70px rgba(0,0,0,.5);
   }
-
   #actions {
     display: flex; flex-direction: column; gap: 14px;
     align-items: center; justify-content: center;
@@ -43,7 +42,6 @@
     cursor: pointer;
     transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
   }
-
   .action:focus {
     outline: none; transform: translateY(-3px);
     border-color: #fff; box-shadow: 0 0 0 4px rgba(91,158,255,.3), 0 16px 36px rgba(18,79,190,.45);
@@ -88,9 +86,8 @@
     height: 100%; width: 0%;
     background: linear-gradient(90deg, #3b8cff, #47c76a);
     border-radius: 3px;
-    transition: width .3s ease;
+    transition: width .4s ease;
   }
-  #cache-bar.done #cache-fill { background: #47c76a; }
 </style>
 </head>
 <body>
@@ -109,7 +106,7 @@
 <div id="cache-bar">
   <div id="cache-label">
     <span id="cache-text">Caching for offline use…</span>
-    <span id="cache-pct">0%</span>
+    <span id="cache-pct"></span>
   </div>
   <div id="cache-track"><div id="cache-fill"></div></div>
 </div>
@@ -127,46 +124,77 @@ try {
     });
 } catch (e) {}
 
-// Cache indicator
-var cacheBar  = document.getElementById("cache-bar");
-var cacheFill = document.getElementById("cache-fill");
-var cacheText = document.getElementById("cache-text");
-var cachePct  = document.getElementById("cache-pct");
+// AppCache indicator
+try {
+    var appCache = window.applicationCache;
+    var bar      = document.getElementById("cache-bar");
+    var fill     = document.getElementById("cache-fill");
+    var text     = document.getElementById("cache-text");
+    var pct      = document.getElementById("cache-pct");
 
-function setCacheProgress(pct) {
-    cacheFill.style.width = pct + "%";
-    cachePct.textContent  = Math.round(pct) + "%";
-}
+    function showBar() { bar.classList.add("visible"); }
+    function hideBar(delay) {
+        setTimeout(function () { bar.classList.remove("visible"); }, delay || 0);
+    }
 
-// Register service worker and listen for progress messages
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function (reg) {
-        // If a new SW is installing right now, show the bar
-        if (reg.installing) {
-            cacheBar.classList.add("visible");
-        }
-        reg.addEventListener("updatefound", function () {
-            cacheBar.classList.add("visible");
-            setCacheProgress(0);
-            cacheText.textContent = "Caching for offline use…";
-        });
-    }).catch(function () {});
+    appCache.addEventListener("checking", function () {
+        showBar();
+        text.textContent = "Checking cache…";
+        pct.textContent  = "";
+        fill.style.width = "10%";
+    });
 
-    navigator.serviceWorker.addEventListener("message", function (e) {
-        if (!e.data || e.data.type !== "CACHE_PROGRESS") return;
-        var pct = e.data.pct;
-        cacheBar.classList.add("visible");
-        setCacheProgress(pct);
-        if (pct >= 100) {
-            cacheBar.classList.add("done");
-            cacheText.textContent = "✓ Ready for offline use";
-            setTimeout(function () {
-                cacheBar.classList.remove("visible");
-                cacheBar.classList.remove("done");
-            }, 2800);
+    appCache.addEventListener("downloading", function () {
+        showBar();
+        text.textContent = "Caching for offline use…";
+        fill.style.width = "20%";
+    });
+
+    appCache.addEventListener("progress", function (e) {
+        showBar();
+        if (e.lengthComputable && e.total > 0) {
+            var p = Math.round((e.loaded / e.total) * 100);
+            fill.style.width = p + "%";
+            pct.textContent  = p + "%";
+        } else {
+            // not computable — just animate forward
+            var cur = parseFloat(fill.style.width) || 20;
+            fill.style.width = Math.min(cur + 3, 90) + "%";
         }
     });
-}
+
+    appCache.addEventListener("cached", function () {
+        fill.style.width = "100%";
+        text.textContent = "✓ Ready for offline use";
+        pct.textContent  = "";
+        fill.style.background = "#47c76a";
+        hideBar(2800);
+    });
+
+    appCache.addEventListener("noupdate", function () {
+        hideBar(0); // already cached, nothing to show
+    });
+
+    appCache.addEventListener("obsolete", function () {
+        showBar();
+        text.textContent = "Cache cleared — reload to re-cache";
+        pct.textContent  = "";
+    });
+
+    appCache.addEventListener("error", function () {
+        hideBar(0); // silently fail, don't confuse user
+    });
+
+    // If already offline, show a quiet indicator
+    if (!navigator.onLine) {
+        showBar();
+        text.textContent = "★ Offline mode";
+        fill.style.width = "100%";
+        fill.style.background = "#47c76a";
+        pct.textContent  = "";
+        hideBar(3000);
+    }
+} catch (e) {}
 </script>
 
 </body>
