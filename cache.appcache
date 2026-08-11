@@ -1,10 +1,9 @@
 CACHE MANIFEST
-# v3
+# v4
 
 CACHE:
 index.html
 slopkit/poops.html
-slopkit/poops.html?go=1&auto=1&trigger=netcontrol&payload=1&v=17
 slopkit/cat.jpg
 slopkit/mmhmm-cats-ps5.gif
 slopkit/core.js
