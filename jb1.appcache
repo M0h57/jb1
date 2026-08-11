@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# v1
+# v2
 
 CACHE:
 index.html
@@ -10,6 +10,7 @@ slopkit/core.js
 slopkit/int64.js
 slopkit/main.js
 slopkit/mem.js
+slopkit/poops.js
 slopkit/rop.js
 slopkit/rop_slave.js
 slopkit/syscalls.js
